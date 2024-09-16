@@ -14,6 +14,10 @@ import face_recognition
 from insightface.app import FaceAnalysis
 import numpy as np
 
+# Unique ID
+import uuid
+from datetime import datetime
+
 # Warnings Ignore
 import warnings
 warnings.filterwarnings("ignore")
@@ -60,7 +64,8 @@ mapping = {0 : "sunglasses", 1 : "sunglasses", 2 : "eyeglasses", 3 : "headware",
 
 # Coversion to Image
 def base64_to_image(base64_str):
-    print(f"BASE64: \n{base64_str}\n\n")
+    print(f"BASE64: \n\n{base64_str}")
+    print("\n\n")
 
     try:
         # Decode Base64 string
@@ -98,11 +103,18 @@ def base64_to_image(base64_str):
     
 
 # Saving the Converted Image
-def save_image(image, image_name):
+def save_image(image, image_name=None):
     try:
+        # Generate a unique filename if none is provided
+        if image_name is None:
+            unique_id = uuid.uuid4().hex
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            image_name = f"{timestamp}_{unique_id}.jpg"
+            print(f"IMAGE NAME: {image_name}")
+        
         image_path = os.path.join(BASE_FOLDER, image_name)
         Image.fromarray(image).save(image_path)
-        print("(105) Image Saving Successfull")
+        print(f"(105) Image Saving Successful: {image_name}")
         return image_path, None
     except Exception as e:
         print("(108) Image Saving Failed")
@@ -204,10 +216,13 @@ def check_image(image_path):
                 return 'Accepted', None
             else:
                 if error == "No Face Detected":
+                    print("No Face Detected")
                     return "Rejected", 0
                 elif error == "Multiple faces detected":
+                    print("(210) Multiple Faces")
                     return 'Rejected', 1
                 else:
+                    print("Face Cropping Failed")
                     return "Rejected", 2        #Face cropping failed'
                 
         elif len(faces) > 1:
@@ -229,9 +244,11 @@ def check_image(image_path):
                 if success:
                     return 'Accepted', None
                 else:
+                    print("Face Cropping Failed for Largest Face")
                     return 'Rejected', 2
                     # return 'Rejected', error if error else 'Face cropping failed'
             else:
+                print("Multiple Faces found for Largest Face")
                 return 'Rejected', 1
                 # return 'Rejected', 'Multiple faces detected'
         else:
@@ -378,7 +395,9 @@ def get_result(base64_image):
             "confidence_scores":{}
         }
     
-    image_path, error = save_image(image, 'image.jpg')
+    # image_path, error = save_image(image, 'image.jpg')
+    image_path, error = save_image(image, None) 
+
     
     # Error in Saving
     if error:
@@ -478,11 +497,6 @@ def get_result(base64_image):
             "Detected Class": yolo_class
         }
 
-        # # Combined Result
-        # print("\n\nCOMBINED RESULT:")
-        # print(f"- \n Insight Face Result: {Face_Result}, \n Media pipe Result: {Result2}, \n Clip B/32 Result: {Result3}, \n yolo Result: {Result4}, \n NSFW Result: {'Rejected' if errornsfw else 'Accepted'}.")
-        # print(f"\n Insight Face Error: {error1}, \n Media pipe Error: {errormedia}, \n Clip B/32 Error: {errorclip}, \n yolo error: {erroryolo}, \n NSFW error: {errornsfw}.\n")
-
         accepted_count = sum([Result2 == 'Accepted', Result3 == 'Accepted', Result4 == 'Accepted'])
         
         if accepted_count >= 2:
@@ -529,7 +543,8 @@ def get_result(base64_image):
     
     # Combined Result
     print("\n\nCOMBINED RESULT:")
-    print(f"- \n Insight Face Result: {Face_Result}, \n Media pipe Result: {Result2}, \n Clip B/32 Result: {Result3}, \n yolo Result: {Result4}, \n")
+    print(f" \n Insight Face Result: {Face_Result}, \n Media pipe Result: {Result2}, \n Clip B/32 Result: {Result3}, \n yolo Result: {Result4}, \n")
+    print(f"------------------------------------------------------------------------------------------------------------------------------------")
     # print(f"\n Insight Face Error: {error1}, \n Media pipe Error: {errormedia}, \n Clip B/32 Error: {errorclip}, \n yolo error: {erroryolo}, \n NSFW error: {errornsfw}.\n")
 
     # Clean up temporary folders
