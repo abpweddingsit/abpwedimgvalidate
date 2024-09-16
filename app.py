@@ -16,7 +16,7 @@ def process_image():
         
         # Call the get_result function to process the base64 image
         final_result = get_result(base64_image)
-        
+        print(final_result);
         # Prepare the response
         response = final_result
         return jsonify(response), 200
@@ -25,4 +25,4 @@ def process_image():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=False, port=5001, host='0.0.0.0')
+    app.run(debug=True, port=5001, host='0.0.0.0')
