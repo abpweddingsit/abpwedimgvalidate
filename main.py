@@ -24,8 +24,8 @@ from datetime import datetime
 import warnings
 warnings.filterwarnings("ignore")
 
-BASE_FOLDER = "/home/abp/Documents/ABPProduction/ABP/ProfileModeration/Version14/API2/Demo" 
-YOLO_FOLDER = "/home/abp/Documents/ABPProduction/ABP/ProfileModeration/Version14/API/best.pt"
+BASE_FOLDER = "/data/app/source-code/abp-img-proc/ABP-main/assets/Demo" 
+YOLO_FOLDER = "/data/app/source-code/abp-img-proc/ABP-main/assets/best.pt"
 
 # Creating the BASE FOLDER
 if not os.path.exists(BASE_FOLDER):
