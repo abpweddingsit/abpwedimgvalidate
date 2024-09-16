@@ -13,6 +13,8 @@ import mediapipe as mp
 import face_recognition
 from insightface.app import FaceAnalysis
 import numpy as np
+from transformers import CLIPProcessor, CLIPModel
+import time
 
 # Unique ID
 import uuid
@@ -22,8 +24,8 @@ from datetime import datetime
 import warnings
 warnings.filterwarnings("ignore")
 
-BASE_FOLDER = "/data/app/source-code/abp-img-proc/ABP-main/assets/Demo" 
-YOLO_FOLDER = "/data/app/source-code/abp-img-proc/ABP-main/assets/best.pt"
+BASE_FOLDER = "/home/abp/Documents/ABPProduction/ABP/ProfileModeration/Version14/API2/Demo" 
+YOLO_FOLDER = "/home/abp/Documents/ABPProduction/ABP/ProfileModeration/Version14/API/best.pt"
 
 # Creating the BASE FOLDER
 if not os.path.exists(BASE_FOLDER):
@@ -58,12 +60,18 @@ RNmodel, RNpreprocess = clip.load("RN101", device=device)
 rn101textlist = ["a sunglass", "a reading glass"]
 rn101text = clip.tokenize(rn101textlist).to(device)
 
+# CLIP ANIME
+model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
 # YOLO
 yolo_model = YOLO(YOLO_FOLDER)
 mapping = {0 : "sunglasses", 1 : "sunglasses", 2 : "eyeglasses", 3 : "headware", 4 : "headware", 5 : "headware"}
 
 # Coversion to Image
 def base64_to_image(base64_str):
+    start_time = time.time()  # Start time measurement
+    
     print(f"BASE64: \n\n{base64_str}")
     print("\n\n")
 
@@ -97,13 +105,21 @@ def base64_to_image(base64_str):
         
         print("(93) Base64 Try")
         return image, None
+    
     except Exception as e:
         print("(96) Base64 Except")
         return None, str(e)
     
+    finally:
+        end_time = time.time()  # End time measurement
+        elapsed_time = end_time - start_time
+        print(f"(base64_to_image) Time taken: {elapsed_time:.4f} seconds")
+    
 
 # Saving the Converted Image
 def save_image(image, image_name=None):
+    start_time = time.time()  # Start time measurement
+    
     try:
         # Generate a unique filename if none is provided
         if image_name is None:
@@ -119,9 +135,15 @@ def save_image(image, image_name=None):
     except Exception as e:
         print("(108) Image Saving Failed")
         return None, str(e)
+    finally:
+        end_time = time.time()  # End time measurement
+        elapsed_time = end_time - start_time
+        print(f"(save_image) Time taken: {elapsed_time:.4f} seconds")
 
-# NSFW
+# NSFW Detection
 def detect_nsfw(image):
+    start_time = time.time()  # Start time measurement
+    
     try:
         print("(114) NSFW Try")
         img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
@@ -144,11 +166,18 @@ def detect_nsfw(image):
     except Exception as e:
         print("(133) NSFW Except")
         return str(e), None
+    finally:
+        end_time = time.time()  # End time measurement
+        elapsed_time = end_time - start_time
+        print(f"(detect_nsfw) Time taken: {elapsed_time:.4f} seconds")
 
 # Cropping the Face from the Image (If Face Exists {Face Recognition})
 def crop_faces(image, output_dir, expansion_factor=0.3):
+    start_time = time.time()  # Start time measurement
+    
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    
     try:
         print("(141) Face Recognition Try")
         image = np.array(image)
@@ -175,11 +204,18 @@ def crop_faces(image, output_dir, expansion_factor=0.3):
     except Exception as e:
         print("(164) Face Recognition Exception")
         return False, str(e)
+    finally:
+        end_time = time.time()  # End time measurement
+        elapsed_time = end_time - start_time
+        print(f"(crop_faces) Time taken: {elapsed_time:.4f} seconds")
 
 # Saving the Largest Face (Multiple Faces)
 def save_face(largestface, image, output_dir, expansion_factor=0.3):
+    start_time = time.time()  # Start time measurement
+    
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    
     try:
         print("(172) Largest Face Try")
         image = np.array(image)
@@ -201,14 +237,19 @@ def save_face(largestface, image, output_dir, expansion_factor=0.3):
     except Exception as e:
         print("(190) Largest Face Except")
         return False, str(e)
+    finally:
+        end_time = time.time()  # End time measurement
+        elapsed_time = end_time - start_time
+        print(f"(save_face) Time taken: {elapsed_time:.4f} seconds")
 
 # Insight Face Processing
 def check_image(image_path):
+    start_time = time.time()  # Start time measurement
+    
     try:
         print("(196) Insight Face Processing Try")
         img = cv2.imread(image_path)
-        # print(image_path)
-        faces = app.get(img)
+        faces = app.get(img)  # Assuming 'app' is a pre-initialized face detection model
         
         if len(faces) == 1:
             success, error = crop_faces(Image.open(image_path), 'TempFaces')
@@ -223,7 +264,7 @@ def check_image(image_path):
                     return 'Rejected', 1
                 else:
                     print("Face Cropping Failed")
-                    return "Rejected", 2        #Face cropping failed'
+                    return "Rejected", 2
                 
         elif len(faces) > 1:
             areas = []
@@ -246,31 +287,56 @@ def check_image(image_path):
                 else:
                     print("Face Cropping Failed for Largest Face")
                     return 'Rejected', 2
-                    # return 'Rejected', error if error else 'Face cropping failed'
             else:
                 print("Multiple Faces found for Largest Face")
                 return 'Rejected', 1
-                # return 'Rejected', 'Multiple faces detected'
         else:
             confidence_scores = [face.det_score for face in faces] if faces else []
             error_msg = f"No Face Detected. Face Confidence Score: {confidence_scores[0]}" if confidence_scores else "No Face Detected"
             return 'Rejected', 0
-            # return 'Rejected', error_msg
     except Exception as e:
         print("(243) Insight Face Processing Exception")
         return 'Rejected', 2
-        # return 'Rejected', str(e)
+    finally:
+        end_time = time.time()  # End time measurement
+        elapsed_time = end_time - start_time
+        print(f"(check_image) Time taken: {elapsed_time:.4f} seconds")
+        
+def check_if_cartoon(image_path):
+    start_time = time.time()
+    try:
+        image = Image.open(image_path)
+        inputs = processor(text=["image of a real person", "animated image or image of cartoon image"], images=image, return_tensors="pt", padding=True)
+        outputs = model(**inputs)
+        logits_per_image = outputs.logits_per_image  # this is the image-text similarity score
+        probs = logits_per_image.softmax(dim=1)
+        result_index = torch.argmax(probs)
+        if result_index == 1:
+            print("Animated Image Detected")
+            return "Cartoon", None
+        else:
+            return "Real", None
+    except Exception as e:
+        print("Animated Image Exception")
+        return None, str(e)
+    finally:
+        end_time = time.time()
+        print(f"(check_if_cartoon) Time taken: {end_time - start_time:.4f} seconds")
 
 # MediaPipe Processing
 def detect_landmarks(image):
+    start_time = time.time()
     print("(249) Mediapipe Processing")
     results = mp_face_mesh.process(cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB))
     if not results.multi_face_landmarks:
         return None
+    end_time = time.time()
+    print(f"(detect_landmarks) Time taken: {end_time - start_time:.4f} seconds")
     return results.multi_face_landmarks[0]
 
 # Mediapipe Face Processing
 def process_single_image(image):
+    start_time = time.time()
     try:
         print("(258) Mediapipe Single Image Processing")
         image_top = image[:image.shape[0] // 2, :]
@@ -288,14 +354,18 @@ def process_single_image(image):
                 error_message += "Bottom Face Error; "
             error_message = error_message.rstrip("; ")
             
+        end_time = time.time()
+        print(f"(process_single_image) Time taken: {end_time - start_time:.4f} seconds")
         return Result2, error_message
     except Exception as e:
         print("(276) Mediapipe Single Image Exception")
+        end_time = time.time()
+        print(f"(process_single_image) Time taken: {end_time - start_time:.4f} seconds")
         return 'Rejected', str(e)
-
 
 # CLIP Processing
 def process_image_clip(image):
+    start_time = time.time()
     try:
         print("(243) CLIP B32 Processing Try")
         image = Image.fromarray(image)  # Converts NumPy array to PIL Image
@@ -324,35 +394,52 @@ def process_image_clip(image):
 
                 if rn101_confidence > 0.5 and rn101textlist[rn101_predicted_index] == "a reading glass":
                     print("Accepted by RN101 for Eyeglasses")
+                    end_time = time.time()
+                    print(f"(process_image_clip) Time taken: {end_time - start_time:.4f} seconds")
                     return "Accepted", None, confidence, detected_class
                 else:
+                    end_time = time.time()
+                    print(f"(process_image_clip) Time taken: {end_time - start_time:.4f} seconds")
                     return "Rejected", f"Error: {detected_class}", confidence, detected_class
             else:
+                end_time = time.time()
+                print(f"(process_image_clip) Time taken: {end_time - start_time:.4f} seconds")
                 return "Rejected", f"Error: {detected_class}", confidence, detected_class
         
         elif confidence > 0.8:                                                              # Rejection for Headware
+            end_time = time.time()
+            print(f"(process_image_clip) Time taken: {end_time - start_time:.4f} seconds")
             return "Rejected", f"Error: {detected_class}", confidence, detected_class
         
         else:
+            end_time = time.time()
+            print(f"(process_image_clip) Time taken: {end_time - start_time:.4f} seconds")
             return "Accepted", None, confidence, detected_class
         
     except Exception as e:
         print("(323) CLIP Processing Exception")
+        end_time = time.time()
+        print(f"(process_image_clip) Time taken: {end_time - start_time:.4f} seconds")
         return 'Rejected', str(e), 0, None
 
 # YOLO Processing
 def process_yolo(image):
+    start_time = time.time()
     try:
         print("(329) YOLO Processing Try")
         image = Image.fromarray(image)
         results = yolo_model(image)
         
         if len(results[0].boxes) == 0:
+            end_time = time.time()
+            print(f"(process_yolo) Time taken: {end_time - start_time:.4f} seconds")
             return "Accepted", None, None, None
         
         conf = torch.max(results[0].boxes.conf).item()
         
         if conf < 0.8:
+            end_time = time.time()
+            print(f"(process_yolo) Time taken: {end_time - start_time:.4f} seconds")
             return "Accepted", None, conf, None
         
         z = torch.argmax(results[0].boxes.conf).item()
@@ -362,13 +449,19 @@ def process_yolo(image):
         
         if a == 2:                                          # Eyeglasses
             print("(347) YOLO Eyeglass Acceptance")
+            end_time = time.time()
+            print(f"(process_yolo) Time taken: {end_time - start_time:.4f} seconds")
             return "Accepted", None, conf, detected_class
+        end_time = time.time()
+        print(f"(process_yolo) Time taken: {end_time - start_time:.4f} seconds")
         return "Rejected", detected_class, conf, detected_class
     
     except Exception as e:
         print("(352) YOLO Exception")
+        end_time = time.time()
+        print(f"(process_yolo) Time taken: {end_time - start_time:.4f} seconds")
         return "Rejected", f"{e}", None, None
-
+        
     
 def get_result(base64_image):
     final_result = ""
@@ -475,6 +568,32 @@ def get_result(base64_image):
             "confidence_scores":{}
         }
 
+    
+    # ANIMATED IMAGES
+    Cartoon_Face_Result, Error_Code = check_if_cartoon(image_path)
+    if Error_Code != None:                          # Exception in Animated
+        return {
+            "status": 0,
+            "DetectedClass": {
+                "ID_1": None,                       # Invalid Image
+                "ID_2": None,                       # NSFW
+                "ID_3": 1.0,                        # No Face
+                "ID_4": None,                       # Multiple Faces                       
+                "ID_5": None,                       # Eye
+                "ID_6": None,                       # Cap
+            }}
+        
+    if Cartoon_Face_Result == "Cartoon":
+        return {
+            "status": 0,
+            "DetectedClass": {
+                "ID_1": None,                       # Invalid Image
+                "ID_2": None,                       # NSFW
+                "ID_3": 1.0,                        # No Face
+                "ID_4": None,                       # Multiple Faces                       
+                "ID_5": None,                       # Eye
+                "ID_6": None,                       # Cap
+            }}
     
     # CLIP YOLO    
     else:
