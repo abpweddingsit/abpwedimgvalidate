@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from threading import Thread
 import traceback
-from main2 import get_result
+from main import get_result
 
 app = Flask(__name__)
 
