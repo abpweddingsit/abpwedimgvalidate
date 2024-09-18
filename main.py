@@ -243,14 +243,6 @@ def save_face(largestface, image, output_dir, expansion_factor=0.3):
         print(f"(save_face) Time taken: {elapsed_time:.4f} seconds")
 
 # Insight Face Processing
-import os
-import time
-import numpy as np
-from PIL import Image
-from datetime import datetime
-import cv2
-import shutil
-
 def check_image(image_path):
     start_time = time.time()  # Start time measurement
     
@@ -269,17 +261,17 @@ def check_image(image_path):
         if len(faces) == 1:
             success, error = crop_faces(Image.open(image_path), output_dir)
             if success:
-                return 'Accepted', None, output_dir
+                return 'Accepted', None
             else:
                 if error == "No Face Detected":
                     print("No Face Detected")
-                    return "Rejected", 0, output_dir
+                    return "Rejected", 0
                 elif error == "Multiple faces detected":
                     print("(210) Multiple Faces")
-                    return 'Rejected', 1, output_dir
+                    return 'Rejected', 1
                 else:
                     print("Face Cropping Failed")
-                    return "Rejected", 2, output_dir
+                    return "Rejected", 2
                 
         elif len(faces) > 1:
             areas = []
@@ -298,20 +290,20 @@ def check_image(image_path):
                 largestface = faces[largestfaceindex]
                 success, error = save_face(largestface, Image.open(image_path), output_dir)
                 if success:
-                    return 'Accepted', None, output_dir
+                    return 'Accepted', None
                 else:
                     print("Face Cropping Failed for Largest Face")
-                    return 'Rejected', 2, output_dir
+                    return 'Rejected', 2
             else:
                 print("Multiple Faces found for Largest Face")
-                return 'Rejected', 1, output_dir
+                return 'Rejected', 1
         else:
             confidence_scores = [face.det_score for face in faces] if faces else []
             error_msg = f"No Face Detected. Face Confidence Score: {confidence_scores[0]}" if confidence_scores else "No Face Detected"
-            return 'Rejected', 0, output_dir
+            return 'Rejected', 0
     except Exception as e:
         print("(243) Insight Face Processing Exception")
-        return 'Rejected', 2, output_dir
+        return 'Rejected', 2
     finally:
         end_time = time.time()  # End time measurement
         elapsed_time = end_time - start_time
@@ -683,8 +675,8 @@ def get_result(base64_image):
     # print(f"\n Insight Face Error: {error1}, \n Media pipe Error: {errormedia}, \n Clip B/32 Error: {errorclip}, \n yolo error: {erroryolo}, \n NSFW error: {errornsfw}.\n")
 
 # Clean up temporary folder
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
+    # if os.path.exists(output_dir):
+        # shutil.rmtree(output_dir)
     
     # Returning Final Result
     return final_result
