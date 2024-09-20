@@ -470,6 +470,22 @@ def process_yolo(image):
         print(f"(process_yolo) Time taken: {end_time - start_time:.4f} seconds")
         return "Rejected", f"{e}", None, None
         
+# Clean-Up        
+def clear_temp_folders(directory):
+    # Iterate through all items in the specified directory
+    for item in os.listdir(directory):
+        item_path = os.path.join(directory, item)
+        # Check if the item is a directory and starts with 'Temp'
+        if os.path.isdir(item_path) and item.startswith('Temp'):
+            try:
+                shutil.rmtree(item_path)  # Remove the directory and its contents
+                print(f"Removed: {item_path}")
+            except Exception as e:
+                print(f"Error removing {item_path}: {e}")
+
+# Specify the directory to check
+# target_directory = 'D:\ABP'
+        
     
 def get_result(base64_image):
     final_result = ""
@@ -674,9 +690,11 @@ def get_result(base64_image):
     print(f"------------------------------------------------------------------------------------------------------------------------------------")
     # print(f"\n Insight Face Error: {error1}, \n Media pipe Error: {errormedia}, \n Clip B/32 Error: {errorclip}, \n yolo error: {erroryolo}, \n NSFW error: {errornsfw}.\n")
 
-# Clean up temporary folder
+    # Clean up temporary folder
     # if os.path.exists(output_dir):
         # shutil.rmtree(output_dir)
+        
+    clear_temp_folders("/home/dcsadmin/Documents/ABP_FaceOcclusion/ABP/ProfileModeration/Version17/")
     
     # Returning Final Result
     return final_result
