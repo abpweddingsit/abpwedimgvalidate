@@ -9,7 +9,7 @@ from ultralytics import YOLO
 
 
 # PATHS
-YOLO_FOLDER = "/home/abp/Documents/ABPProduction/ABP/ProfileModeration/Version18/API27/API27/best.pt"
+YOLO_FOLDER = "/data/app/source-code/abp-img-proc/ABP-main/assets/best.pt"
 
 # NSFW
 NSFWModel = AutoModelForImageClassification.from_pretrained("Falconsai/nsfw_image_detection")
