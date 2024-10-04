@@ -14,7 +14,7 @@ class MediaPipeClipYolo:
         pass
     
     # Mediapipe
-    def detect_landmarks(image):
+    def detect_landmarks(self, image):
         print("(249) Mediapipe Processing")
         results = mp_face_mesh.process(cv2.cvtColor(np.array(image), cv2.COLOR_BGR2RGB))
         if not results.multi_face_landmarks:
